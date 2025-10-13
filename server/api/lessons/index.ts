@@ -37,13 +37,9 @@ export default defineEventHandler(async (event) => {
       const lessons = rows
         // 2. レッスンの日付が今日以降のものだけに絞り込む
         .filter((row) => {
-          // B列(row[1])の日付文字列をDateオブジェクトに変換
           const lessonDate = new Date(row[1]);
-          // レッスンの日付が今日以降か判定
-          return lessonDate >= today;
+          return lessonDate >= today && row[7] !== '' && row[3] !== '予備';
         })
-        .filter((row) => row[7] !== '')
-        .filter((row) => row[3] !== '予備')
         .map((row) => ({
           lesson_id: row[14],
           date: row[1],
