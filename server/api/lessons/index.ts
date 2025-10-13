@@ -34,22 +34,41 @@ export default defineEventHandler(async (event) => {
       // rowsは配列の配列なので、各行をオブジェクトに変換する
       // 例: ['L001', '2025/10/08 20:00', '=LOVE', ...]
       //   -> { lesson_id: 'L001', datetime: '2025/10/08 20:00', ... }
+      const COLUMN_INDICES = {
+        DATE: 1,
+        TIME: 2,
+        GROUP: 3,
+        LOCATION: 4,
+        SONG: 7,
+        LESSON_ID: 14,
+      };
       const lessons = rows
         // 2. レッスンの日付が今日以降のものだけに絞り込む
         .filter((row) => {
-          const lessonDate = new Date(row[1]);
-          return lessonDate >= today && row[7] !== '' && row[3] !== '予備';
+          const { DATE, SONG, GROUP } = COLUMN_INDICES;
+          const lessonDate = new Date(row[DATE]);
+          return lessonDate >= today && row[SONG] !== '' && row[GROUP] !== '予備';
         })
-        .map((row) => ({
-          lesson_id: row[14],
-          date: row[1],
-          time: row[2],
-          group: row[3],
-          location: row[4],
-          song: row[7],
-        }
-      ));
+        .map((row) => {
+          const {
+            LESSON_ID,
+            DATE,
+            TIME,
+            GROUP,
+            LOCATION,
+            SONG,
+          } = COLUMN_INDICES;
 
+          // どのデータがどのプロパティに対応するのかが一目瞭然になる
+          return {
+            lesson_id: row[LESSON_ID],
+            date: row[DATE],
+            time: row[TIME],
+            group: row[GROUP],
+            location: row[LOCATION],
+            song: row[SONG],
+          };
+        });
       // 整形したデータを返す
       return lessons;
     } else {
