@@ -16,8 +16,8 @@ export default defineEventHandler(async (event) => {
     const sheets = google.sheets({ version: "v4", auth });
 
     // スプレッドシートIDと範囲の設定をenvファイルから取得
-    const spreadsheetId = '1TQJzM3ctlRFd5-9TKccZ7ZcPtIlVnK9NkNjc7hAXp94';
-    const range = "レッスン管理!A2:O"; // 例: 'レッスン管理'シートのA2からO列まで
+    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+    const range = process.env.GOOGLE_LESSONSHEET_RANGE;
 
     // 3. スプレッドシートからデータを取得
     const response = await sheets.spreadsheets.values.get({

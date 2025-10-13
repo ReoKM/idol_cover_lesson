@@ -25,16 +25,16 @@ const formattedDateTime = computed(() => {
   });
 });
 
+
+// グループ名とCSSクラスのマッピング
+const groupColorMap: Record<string, string> = {
+  '＝LOVE': 'color-love',
+  '乃木坂46': 'color-nogizaka',
+};
+
 // グループ名に応じてCSSクラス名を返す算出プロパティ
 const cardColorClass = computed(() => {
-  switch (props.lesson.group) {
-    case '＝LOVE':
-      return 'color-love'; // =LOVEの場合は 'color-love' クラスを返す
-    case '乃木坂46':
-      return 'color-nogizaka'; // 乃木坂46の場合は 'color-nogizaka' クラスを返す
-    default:
-      return ''; // それ以外のグループはデフォルト色（クラスなし）
-  }
+  return groupColorMap[props.lesson.group] || '';
 });
 </script>
 
