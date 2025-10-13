@@ -16,8 +16,8 @@ export default defineEventHandler(async (event) => {
     const sheets = google.sheets({ version: "v4", auth });
 
     // スプレッドシートIDと範囲の設定をenvファイルから取得
-    const spreadsheetId = '1TQJzM3ctlRFd5-9TKccZ7ZcPtIlVnK9NkNjc7hAXp94';
-    const range = "レッスン管理!A2:O"; // 例: 'レッスン管理'シートのA2からO列まで
+    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+    const range = process.env.GOOGLE_LESSONSHEET_RANGE;
 
     // 3. スプレッドシートからデータを取得
     const response = await sheets.spreadsheets.values.get({
@@ -34,26 +34,41 @@ export default defineEventHandler(async (event) => {
       // rowsは配列の配列なので、各行をオブジェクトに変換する
       // 例: ['L001', '2025/10/08 20:00', '=LOVE', ...]
       //   -> { lesson_id: 'L001', datetime: '2025/10/08 20:00', ... }
+      const COLUMN_INDICES = {
+        DATE: 1,
+        TIME: 2,
+        GROUP: 3,
+        LOCATION: 4,
+        SONG: 7,
+        LESSON_ID: 14,
+      };
       const lessons = rows
         // 2. レッスンの日付が今日以降のものだけに絞り込む
         .filter((row) => {
-          // B列(row[1])の日付文字列をDateオブジェクトに変換
-          const lessonDate = new Date(row[1]);
-          // レッスンの日付が今日以降か判定
-          return lessonDate >= today;
+          const { DATE, SONG, GROUP } = COLUMN_INDICES;
+          const lessonDate = new Date(row[DATE]);
+          return lessonDate >= today && row[SONG] !== '' && row[GROUP] !== '予備';
         })
-        .filter((row) => row[7] !== '')
-        .filter((row) => row[3] !== '予備')
-        .map((row) => ({
-          lesson_id: row[14],
-          date: row[1],
-          time: row[2],
-          group: row[3],
-          location: row[4],
-          song: row[7],
-        }
-      ));
+        .map((row) => {
+          const {
+            LESSON_ID,
+            DATE,
+            TIME,
+            GROUP,
+            LOCATION,
+            SONG,
+          } = COLUMN_INDICES;
 
+          // どのデータがどのプロパティに対応するのかが一目瞭然になる
+          return {
+            lesson_id: row[LESSON_ID],
+            date: row[DATE],
+            time: row[TIME],
+            group: row[GROUP],
+            location: row[LOCATION],
+            song: row[SONG],
+          };
+        });
       // 整形したデータを返す
       return lessons;
     } else {
