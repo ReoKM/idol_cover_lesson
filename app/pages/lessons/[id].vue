@@ -20,7 +20,7 @@ const { data, pending, error } = await useFetch<ApiResponse>(`/api/lessons/${les
 const formattedDateTime = computed(() => {
   if (!data.value?.lesson) return '';
   const { date, time } = data.value.lesson;
-  const dateTimeString = `${date} ${time}`;
+  const dateTimeString = `${date.replace(/\//g, '-')}T${time}`;
   return new Date(dateTimeString).toLocaleString('ja-JP', {
     year: 'numeric',
     month: 'long',
@@ -98,7 +98,6 @@ const formattedDateTime = computed(() => {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   width: 100%;
   max-width: 600px;
-  font-family: sans-serif;
 }
 
 .back-link {

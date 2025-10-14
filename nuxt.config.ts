@@ -4,7 +4,6 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
 
-  // ↓ ここから下を追記
   modules: [
     '@nuxtjs/google-fonts'
   ],

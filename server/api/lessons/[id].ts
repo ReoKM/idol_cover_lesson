@@ -32,8 +32,18 @@ export default defineEventHandler(async (event) => {
     });
     const allLessonRows = response.data.values || [];
 
+    // スプレッドシートの列インデックスを定数として定義
+    const LESSON_COLUMN_INDICES = {
+      DATE: 1,
+      TIME: 2,
+      GROUP: 3,
+      LOCATION: 4,
+      SONG: 7,
+      LESSON_ID: 14,
+    };
+
     // 全レッスンの中から、IDが一致する行を1つ見つける
-    const lessonRow = allLessonRows.find(row => row[14] === lessonId);
+    const lessonRow = allLessonRows.find(row => row[LESSON_COLUMN_INDICES.LESSON_ID] === lessonId);
 
     // IDに一致するレッスンが見つからない場合はエラー
     if (!lessonRow) {
@@ -45,25 +55,31 @@ export default defineEventHandler(async (event) => {
     
     // 見つかった行をオブジェクトに整形
     const lessonDetails = {
-      lesson_id: lessonRow[14],
-      date: lessonRow[1],
-      time: lessonRow[2],
-      group: lessonRow[3],
-      location: lessonRow[4],
-      song: lessonRow[7],
+      lesson_id: lessonRow[LESSON_COLUMN_INDICES.LESSON_ID],
+      date: lessonRow[LESSON_COLUMN_INDICES.DATE],
+      time: lessonRow[LESSON_COLUMN_INDICES.TIME],
+      group: lessonRow[LESSON_COLUMN_INDICES.GROUP],
+      location: lessonRow[LESSON_COLUMN_INDICES.LOCATION],
+      song: lessonRow[LESSON_COLUMN_INDICES.SONG],
     };
 
     // 4. 参加者リストの取得
     const reservationResponse = await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: "ReservationList!A2:K", // ★予約者管理シートから取得
+        range: process.env.GOOGLE_RESERVATIONLIST_RANGE,
     });
     const allReservationRows = reservationResponse.data.values || [];
 
+    // 予約リストのスプレッドシートの列インデックスを定数として定義
+    const RESERVATION_COLUMN_INDICES = {
+      PARTICIPANT_NAME: 2,
+      LESSON_ID: 10,
+    };
+
     // 全予約データの中から、IDが一致するものをすべて抽出
     const participants = allReservationRows
-        .filter(row => row[10] === lessonId) // B列のレッスンIDで絞り込み
-        .map(row => row[2]); // C列の参加者名だけを抜き出す
+        .filter(row => row[RESERVATION_COLUMN_INDICES.LESSON_ID] === lessonId) // レッスンIDで絞り込み
+        .map(row => row[RESERVATION_COLUMN_INDICES.PARTICIPANT_NAME]); // 参加者名だけを抜き出す
 
     // 5. レッスン詳細と参加者リストをまとめて返す
     return {
