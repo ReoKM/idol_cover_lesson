@@ -30,9 +30,8 @@ export default defineEventHandler(async (event) => {
     // データをJSON形式に整形
     if (rows && rows.length) {
       // タイムゾーン問題を解決するため、常に日本の今日の日付を基準にする
-      const nowInJapan = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
-      const todayInJapan = new Date(nowInJapan);
-      todayInJapan.setHours(0, 0, 0, 0);
+      const japanDateString = new Date().toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
+      const todayInJapan = new Date(japanDateString);
       
       const COLUMN_INDICES = {
         DATE: 1,
@@ -53,7 +52,7 @@ export default defineEventHandler(async (event) => {
           const lessonDate = new Date(row[DATE]);
           
           // 基準をタイムゾーン対応済みの `todayInJapan` に変更
-          return lessonDate >= todayInJapan && row[SONG] && row[SONG] !== '' && row[GROUP] !== '予備';
+          return lessonDate >= todayInJapan && row[SONG] && row[GROUP] !== '予備';
         })
         .map((row) => {
           const {
