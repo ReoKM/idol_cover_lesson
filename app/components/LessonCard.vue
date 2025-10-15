@@ -43,7 +43,7 @@ const cardColorClass = computed(() => {
     <div class="lesson-card" :class="cardColorClass">
       <h2 class="datetime">{{ formattedDateTime }}</h2>
       <p class="details">{{ lesson.group }} / {{ lesson.song }}</p>
-      <p class="location">場所：{{ lesson.location }}</p>
+      <p class="show-link">詳細を見る ></p>
     </div>
   </NuxtLink>
 </template>
@@ -90,7 +90,7 @@ const cardColorClass = computed(() => {
   margin: 0 0 12px 0;
 }
 
-.location {
+.show-link {
   font-size: 0.875rem; /* 14px */
   color: #555;
   margin: 0;
