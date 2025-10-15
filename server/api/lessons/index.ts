@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     const range = process.env.GOOGLE_LESSONSHEET_RANGE;
 
-    // 3. スプレッドシートからデータを取得
+    // スプレッドシートからデータを取得
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range,
@@ -27,14 +27,12 @@ export default defineEventHandler(async (event) => {
 
     const rows = response.data.values;
 
-    // 4. データをJSON形式に整形
+    // データをJSON形式に整形
     if (rows && rows.length) {
-      // --- ▼ここから修正▼ ---
       // タイムゾーン問題を解決するため、常に日本の今日の日付を基準にする
       const nowInJapan = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
       const todayInJapan = new Date(nowInJapan);
       todayInJapan.setHours(0, 0, 0, 0);
-      // --- ▲修正ここまで▲ ---
       
       const COLUMN_INDICES = {
         DATE: 1,
@@ -54,10 +52,8 @@ export default defineEventHandler(async (event) => {
 
           const lessonDate = new Date(row[DATE]);
           
-          // --- ▼ここを修正▼ ---
           // 基準をタイムゾーン対応済みの `todayInJapan` に変更
           return lessonDate >= todayInJapan && row[SONG] && row[SONG] !== '' && row[GROUP] !== '予備';
-          // --- ▲修正ここまで▲ ---
         })
         .map((row) => {
           const {
