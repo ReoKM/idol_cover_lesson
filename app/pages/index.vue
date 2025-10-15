@@ -10,7 +10,7 @@ const selectedMonth = ref('all');
 // APIから全レッスンデータを取得
 const { data: lessons, pending, error } = await useFetch<Lesson[]>('/api/lessons');
 
-// パフォーマンス向上のため、月に一度変換したレッスンリストを用意します
+// パフォーマンス向上のため、月情報を追加したレッスンリストを算出プロパティでキャッシュします
 const lessonsWithMonth = computed(() => {
   if (!lessons.value) return [];
   return lessons.value.map(lesson => ({
@@ -21,8 +21,6 @@ const lessonsWithMonth = computed(() => {
 
 // 選択されたフィルターに応じてレッスンリストを絞り込む算出プロパティ
 const filteredLessons = computed(() => {
-  if (!lessonsWithMonth.value.length) return [];
-
   return lessonsWithMonth.value.filter(lesson => {
     // グループ名での絞り込み条件
     const groupMatch = selectedGroup.value === 'all' || lesson.group === selectedGroup.value;
@@ -51,7 +49,8 @@ const uniqueMonths = computed(() => {
 
 <template>
   <div class="page-container">
-    <h1 class="title">レッスン一覧</h1>
+    <h1 class="title">IDOL cover dance lesson</h1>
+    <h2 class="page-title">レッスン一覧</h2>
 
     <div class="filters">
       <select v-model="selectedMonth">
@@ -94,8 +93,12 @@ const uniqueMonths = computed(() => {
 }
 
 .title {
-  font-size: 2rem;
-  margin-bottom: 16px;
+  font-size: 24px;
+  margin: 0;
+}
+
+.page-title {
+  font-size: 20px;
 }
 
 .filters {
