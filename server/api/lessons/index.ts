@@ -29,11 +29,13 @@ export default defineEventHandler(async (event) => {
 
     // 4. データをJSON形式に整形
     if (rows && rows.length) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      // rowsは配列の配列なので、各行をオブジェクトに変換する
-      // 例: ['L001', '2025/10/08 20:00', '=LOVE', ...]
-      //   -> { lesson_id: 'L001', datetime: '2025/10/08 20:00', ... }
+      // --- ▼ここから修正▼ ---
+      // タイムゾーン問題を解決するため、常に日本の今日の日付を基準にする
+      const nowInJapan = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+      const todayInJapan = new Date(nowInJapan);
+      todayInJapan.setHours(0, 0, 0, 0);
+      // --- ▲修正ここまで▲ ---
+      
       const COLUMN_INDICES = {
         DATE: 1,
         TIME: 2,
@@ -42,12 +44,20 @@ export default defineEventHandler(async (event) => {
         SONG: 7,
         LESSON_ID: 14,
       };
+
       const lessons = rows
-        // 2. レッスンの日付が今日以降のものだけに絞り込む
         .filter((row) => {
           const { DATE, SONG, GROUP } = COLUMN_INDICES;
+
+          // 日付が空の行は無効として除外
+          if (!row[DATE]) return false;
+
           const lessonDate = new Date(row[DATE]);
-          return lessonDate >= today && row[SONG] !== '' && row[GROUP] !== '予備';
+          
+          // --- ▼ここを修正▼ ---
+          // 基準をタイムゾーン対応済みの `todayInJapan` に変更
+          return lessonDate >= todayInJapan && row[SONG] && row[SONG] !== '' && row[GROUP] !== '予備';
+          // --- ▲修正ここまで▲ ---
         })
         .map((row) => {
           const {
@@ -59,7 +69,6 @@ export default defineEventHandler(async (event) => {
             SONG,
           } = COLUMN_INDICES;
 
-          // どのデータがどのプロパティに対応するのかが一目瞭然になる
           return {
             lesson_id: row[LESSON_ID],
             date: row[DATE],
@@ -69,6 +78,7 @@ export default defineEventHandler(async (event) => {
             song: row[SONG],
           };
         });
+
       // 整形したデータを返す
       return lessons;
     } else {
@@ -77,8 +87,6 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error) {
     console.error('Error fetching lessons:', error);
-    // エラーが発生した場合は、クライアントにエラー情報を返す
-    // Nuxt 3では throw createError を使うのが一般的
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal Server Error: Unable to fetch lessons',
