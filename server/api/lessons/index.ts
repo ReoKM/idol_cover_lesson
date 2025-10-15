@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
     const range = process.env.GOOGLE_LESSONSHEET_RANGE;
 
-    // 3. スプレッドシートからデータを取得
+    // スプレッドシートからデータを取得
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range,
@@ -27,13 +27,12 @@ export default defineEventHandler(async (event) => {
 
     const rows = response.data.values;
 
-    // 4. データをJSON形式に整形
+    // データをJSON形式に整形
     if (rows && rows.length) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      // rowsは配列の配列なので、各行をオブジェクトに変換する
-      // 例: ['L001', '2025/10/08 20:00', '=LOVE', ...]
-      //   -> { lesson_id: 'L001', datetime: '2025/10/08 20:00', ... }
+      // タイムゾーン問題を解決するため、常に日本の今日の日付を基準にする
+      const japanDateString = new Date().toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
+      const todayInJapan = new Date(japanDateString);
+      
       const COLUMN_INDICES = {
         DATE: 1,
         TIME: 2,
@@ -42,12 +41,18 @@ export default defineEventHandler(async (event) => {
         SONG: 7,
         LESSON_ID: 14,
       };
+
       const lessons = rows
-        // 2. レッスンの日付が今日以降のものだけに絞り込む
         .filter((row) => {
           const { DATE, SONG, GROUP } = COLUMN_INDICES;
+
+          // 日付が空の行は無効として除外
+          if (!row[DATE]) return false;
+
           const lessonDate = new Date(row[DATE]);
-          return lessonDate >= today && row[SONG] !== '' && row[GROUP] !== '予備';
+          
+          // 基準をタイムゾーン対応済みの `todayInJapan` に変更
+          return lessonDate >= todayInJapan && row[SONG] && row[GROUP] !== '予備';
         })
         .map((row) => {
           const {
@@ -59,7 +64,6 @@ export default defineEventHandler(async (event) => {
             SONG,
           } = COLUMN_INDICES;
 
-          // どのデータがどのプロパティに対応するのかが一目瞭然になる
           return {
             lesson_id: row[LESSON_ID],
             date: row[DATE],
@@ -69,6 +73,7 @@ export default defineEventHandler(async (event) => {
             song: row[SONG],
           };
         });
+
       // 整形したデータを返す
       return lessons;
     } else {
@@ -77,8 +82,6 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error) {
     console.error('Error fetching lessons:', error);
-    // エラーが発生した場合は、クライアントにエラー情報を返す
-    // Nuxt 3では throw createError を使うのが一般的
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal Server Error: Unable to fetch lessons',
