@@ -10,17 +10,25 @@ const selectedMonth = ref('all');
 // APIから全レッスンデータを取得
 const { data: lessons, pending, error } = await useFetch<Lesson[]>('/api/lessons');
 
+// パフォーマンス向上のため、月に一度変換したレッスンリストを用意します
+const lessonsWithMonth = computed(() => {
+  if (!lessons.value) return [];
+  return lessons.value.map(lesson => ({
+    ...lesson,
+    month: new Date(lesson.date).getMonth() + 1,
+  }));
+});
+
 // 選択されたフィルターに応じてレッスンリストを絞り込む算出プロパティ
 const filteredLessons = computed(() => {
-  if (!lessons.value) return [];
+  if (!lessonsWithMonth.value.length) return [];
 
-  return lessons.value.filter(lesson => {
+  return lessonsWithMonth.value.filter(lesson => {
     // グループ名での絞り込み条件
     const groupMatch = selectedGroup.value === 'all' || lesson.group === selectedGroup.value;
-    
+
     // 月での絞り込み条件
-    const lessonMonth = new Date(lesson.date).getMonth() + 1;
-    const monthMatch = selectedMonth.value === 'all' || lessonMonth === Number(selectedMonth.value);
+    const monthMatch = selectedMonth.value === 'all' || lesson.month === Number(selectedMonth.value);
 
     // 両方の条件を満たすものだけを返す
     return groupMatch && monthMatch;
@@ -35,8 +43,8 @@ const uniqueGroups = computed(() => {
 
 // ドロップダウンに表示するためのユニークな月のリスト
 const uniqueMonths = computed(() => {
-  if (!lessons.value) return [];
-  const months = lessons.value.map(lesson => new Date(lesson.date).getMonth() + 1);
+  if (!lessonsWithMonth.value.length) return [];
+  const months = lessonsWithMonth.value.map(lesson => lesson.month);
   return [...new Set(months)].sort((a, b) => a - b);
 });
 </script>
@@ -72,7 +80,7 @@ const uniqueMonths = computed(() => {
         />
       </div>
       <p v-else>対象のレッスンはありません。</p>
-      </div>
+    </div>
   </div>
 </template>
 
